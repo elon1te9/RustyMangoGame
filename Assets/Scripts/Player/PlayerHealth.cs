@@ -24,7 +24,7 @@ public class PlayerHealth : MonoBehaviour
 
     private void Start()
     {
-            LevelManager.Instance.UpdateHeartsUI(currentLives);
+        LevelManager.Instance.UpdateHeartsUI(currentLives);
     }
 
     public void TakeDamage()
@@ -32,6 +32,11 @@ public class PlayerHealth : MonoBehaviour
         if (isInvulnerable)return;
         currentLives--;
         LevelManager.Instance.UpdateHeartsUI(currentLives);
+
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayHurt();
+        }
 
         if (currentLives > 0)
         {

@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -13,6 +14,7 @@ public class ButtonManager : MonoBehaviour
     public Animator winAnimator;
     public Animator loseAnimator;
 
+    public TMP_Text textScore;
 
     private bool isPaused = false;
     private bool blockPause = false;
@@ -69,6 +71,7 @@ public class ButtonManager : MonoBehaviour
         isPaused = false;
         Time.timeScale = 0f;
 
+        textScore.text = "Очки: " + LevelManager.Instance.GetScore().ToString();
         gamePanel.SetActive(false);
         pausePanel.SetActive(false);
         losePanel.SetActive(false);

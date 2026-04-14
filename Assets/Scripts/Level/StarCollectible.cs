@@ -7,6 +7,11 @@ public class StarCollectible : MonoBehaviour
         if (!collision.CompareTag("Player"))
             return;
 
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayStar();
+        }
+
         LevelManager.Instance.CollectStar();
         Destroy(gameObject);
     }

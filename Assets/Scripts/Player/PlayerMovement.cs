@@ -38,6 +38,11 @@ public class PlayerMovement : MonoBehaviour
         if ((Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.Space)) && isGrounded)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlayJump();
+            }
         }
     }
 

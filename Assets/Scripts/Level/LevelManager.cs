@@ -1,7 +1,7 @@
 using System.Collections;
 using TMPro;
-using Unity.Multiplayer.PlayMode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class LevelManager : MonoBehaviour
 {
@@ -35,6 +35,11 @@ public class LevelManager : MonoBehaviour
         collectedStars = 0;
 
         UpdateDiamondUI();
+
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayLevelMusic(GetCurrentLevelNumber());
+        }
     }
 
     public void CollectStar()
@@ -47,16 +52,19 @@ public class LevelManager : MonoBehaviour
             StartCoroutine(ShowDoorRoutine(exitDoor.doorPoint));
         }
     }
+
     public void UpdateHeartsUI(int currentLives)
     {
         heart1.SetActive(currentLives >= 1);
         heart2.SetActive(currentLives >= 2);
         heart3.SetActive(currentLives >= 3);
     }
+
     public void UpdateDiamondUI()
     {
         textCountDiamond.text = "x" + collectedStars.ToString();
     }
+
     private IEnumerator ShowDoorRoutine(Transform doorPoint)
     {
         cameraMove.SetTarget(doorPoint);
@@ -71,21 +79,84 @@ public class LevelManager : MonoBehaviour
         if (levelFinished)
             return;
 
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayWin();
+        }
         levelFinished = true;
         StartCoroutine(FinishRoutine());
     }
 
     private IEnumerator FinishRoutine()
     {
+        SendLevelComplete();
         yield return new WaitForSeconds(0.5f);
         buttonManager.ShowWinPanel();
     }
+
     public void LoseLevel()
     {
         if (levelFinished)
             return;
 
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayLose();
+        }
+
         levelFinished = true;
         buttonManager.ShowLosePanel();
+    }
+
+    private void SendLevelComplete()
+    {
+        if (!PlayerSession.IsAuthorized)
+            return;
+
+        CompleteLevelRequest request = new CompleteLevelRequest
+        {
+            userId = PlayerSession.UserId,
+            levelNumber = GetCurrentLevelNumber(),
+            score = collectedStars * 100
+        };
+
+        StartCoroutine(ApiManager.Instance.PostRequest(
+            ApiRoutes.CompleteLevel,
+            JsonUtility.ToJson(request),
+            OnCompleteLevelSuccess,
+            OnCompleteLevelError,
+            true
+        ));
+    }
+
+    private int GetCurrentLevelNumber()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+
+        if (sceneName == "Level1") return 1;
+        if (sceneName == "Level2") return 2;
+        if (sceneName == "Level3") return 3;
+
+        return 1;
+    }
+
+    private void OnCompleteLevelSuccess(string responseJson)
+    {
+        CompleteLevelResponse response = JsonUtility.FromJson<CompleteLevelResponse>(responseJson);
+
+        if (response != null && response.status)
+        {
+            PlayerSession.TotalScore = response.totalScore;
+        }
+    }
+
+    private void OnCompleteLevelError(string error)
+    {
+        Debug.LogError("Ошибка сохранения уровня: " + error);
+    }
+
+    public int GetScore()
+    {
+        return collectedStars * 100;
     }
 }
